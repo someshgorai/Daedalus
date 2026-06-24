@@ -1,0 +1,37 @@
+{
+  "name": "daedalus",
+  "displayName": "Daedalus",
+  "version": "2.0.0",
+  "description": "Daedalus is an AI-powered LeetCode mentor that gives hints, not solutions",
+  "author": "Somesh Gorai",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "@plasmohq/messaging": "0.7.2",
+    "@plasmohq/storage": "^1.13.0",
+    "@wxt-dev/module-react": "^1.1.5",
+    "plasmo": "0.90.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.4.21"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.4.5"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://leetcode.com/*",
+      "https://openrouter.ai/*"
+    ],
+    "permissions": [
+      "storage",
+      "activeTab",
+      "scripting"
+    ]
+  }
+}
