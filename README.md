@@ -2,7 +2,7 @@
 AI-Powered LeetCode Mentor — Hints, Not Solutions
 
 ## Overview
-Daedalus is a Chrome extension that acts as a real-time coding mentor while you solve LeetCode problems. It reads the active problem, inspects your editor code, and provides structured analysis with contextual hints — without ever giving away a complete solution.
+Daedalus is a Chrome extension that acts as a real-time coding mentor while you solve LeetCode problems. It reads the active problem, inspects your editor code, answers general programming questions, and provides structured analysis with contextual guidance — without ever giving away a complete solution.
 
 > 🧠 **Philosophy:** Daedalus is built around a core principle — **guided learning over instant answers.** Every response is designed to push you toward understanding the solution yourself.
 
@@ -16,7 +16,7 @@ AI chatbots like ChatGPT can help, but they have the opposite problem — they e
 ---
 
 ## Solution
-Daedalus bridges the gap between struggle and surrender. It injects a dockable sidebar directly onto LeetCode problem pages that understands your current problem context — the problem statement, your chosen language, and your in-progress code — and routes everything through an LLM with strict mentor guardrails. The LLM is instructed to review, critique, and hint, but **never** to produce a working solution. Analysis responses are structured JSON with verdicts, complexity assessments, and alternative approach hints. Chat responses are capped at three sentences plus an optional short snippet.
+Daedalus bridges the gap between struggle and surrender. It injects a dockable sidebar directly onto LeetCode problem pages that understands your current problem context — the problem statement, your chosen language, and your in-progress code — and routes everything through an LLM with strict mentor guardrails. The LLM is instructed to review, critique, explain syntax or concepts, and answer unrelated programming questions, but **never** to produce a working solution. Analysis responses are structured JSON with verdicts, complexity assessments, and alternative approach hints. Chat responses stay concise while allowing short examples when they help.
 
 ---
 
@@ -27,14 +27,15 @@ Daedalus bridges the gap between struggle and surrender. It injects a dockable s
 - **Intuition Review:** Evaluates your conceptual approach with a summary, key insight, and "why it works" explanation.
 - **Method Assessment:** Identifies the algorithm name and category, with numbered implementation steps.
 - **Complexity Breakdown:** Reports time and space complexity with explanations, plus a note on whether an optimal solution exists.
-- **Code Style Scoring:** Scores readability, efficiency, structure, and best practices on a 0–100 scale, with specific strengths and improvements listed.
+- **Code Style Scoring:** Scores readability, efficiency, structure, and best practices on a 0–10 scale, with specific strengths and improvements listed.
 - **Key Concepts:** Surfaces the foundational data structures and algorithms your solution relies on.
 - **Alternative Comparison:** Table of alternative approaches showing time/space complexity and feasibility — conceptual hints only, never full implementations.
 
 ### Mentor Chat
 - **Context-Aware Conversations:** Every chat message includes the latest problem statement, your current language, and freshly re-scanned editor code — the mentor always sees what you see.
+- **General Programming Q&A:** You can ask syntax, STL, language-feature, algorithm, or debugging questions even when they are not directly related to the current LeetCode problem.
 - **Conversation History:** Maintains up to the last 6 messages for multi-turn dialogue so the mentor can build on previous hints.
-- **Triple-Layer Guardrails:** Pre-filter blocks "give me the solution" requests before any API call. System prompt enforces 8 strict rules. Post-processing via `enforceMentorResponse()` truncates to 80 words, rejects code blocks over 3 lines, and replaces violations with canned hints.
+- **Triple-Layer Guardrails:** Pre-filter blocks full-solution requests before any API call. System prompt allows general programming help while refusing complete LeetCode solutions. Post-processing via `enforceMentorResponse()` cleans markdown/LaTeX artifacts and rejects oversized code dumps.
 - **Code Block Rendering:** LLM responses are parsed through a markdown processor that separates prose from code, rendering syntax-highlighted code blocks with line numbers and one-click copy.
 
 ### LeetCode Integration
@@ -148,7 +149,7 @@ State-dependent visuals use modifier classes such as `sidebar--minimized`, `tab-
 When you click **Analyze**, Daedalus performs these steps:
 
 1. **Re-scan:** The content script re-reads the LeetCode DOM for the latest editor code, language, and problem statement.
-2. **Validate:** `validateCode()` filters out blank lines and comment-only lines, then rejects code with fewer than 3 meaningful lines, empty code, or matches against 10 placeholder patterns (e.g., "TODO", "Write your code here", bare `class Solution` stubs, `pass`/`return null` only functions).
+2. **Validate:** `validateCode()` filters out blank lines, comments, wrappers, access labels, bare braces, class declarations, and function signatures. It rejects empty editors, empty LeetCode stubs, placeholder text, and submissions with too little actual implementation logic.
 3. **Prompt Construction:** The problem, language, and code are injected into a structured prompt template that demands a specific JSON response format.
 4. **LLM Request:** The prompt is sent to OpenRouter's chat completions endpoint via the background service worker.
 5. **JSON Extraction:** The response is parsed through a 3-layer fallback pipeline:
@@ -189,11 +190,11 @@ When you click **Analyze**, Daedalus performs these steps:
     "optimalNote": "This is the optimal solution"
   },
   "codeStyle": {
-    "readability": 85,
-    "efficiency": 90,
-    "structure": 80,
-    "bestPractices": 75,
-    "overallScore": 82,
+    "readability": 7.2,
+    "efficiency": 6.8,
+    "structure": 7.6,
+    "bestPractices": 7,
+    "overallScore": 7.2,
     "strengths": ["Clean variable naming"],
     "improvements": ["Add early return for edge cases"]
   },
@@ -222,15 +223,15 @@ Every field is defensively normalized through `asText()`, `asList()`, `asScore()
 
 ### Mentor Conversation Flow
 
-Each chat turn includes the current problem, language, the latest editor code (freshly re-scanned), and up to the last 6 messages of conversation history. The system prompt explicitly instructs the LLM to behave as a coding mentor.
+Each chat turn includes the current problem, language, the latest editor code (freshly re-scanned), and up to the last 6 messages of conversation history. The system prompt explicitly instructs the LLM to behave as a coding mentor, answer unrelated programming questions directly, and use the current problem only when the user's message actually depends on it.
 
 ### Triple-Layer Guardrails
 
 | Layer | Enforcement Point | Details |
 |-------|-------------------|---------|
 | **1. Pre-Filter** | Before API call | Regex detects phrases like "give me the full solution" and returns a canned refusal immediately — no tokens wasted |
-| **2. System Prompt** | 8 strict rules in the prompt | Never write complete functions, max 3 lines of code, under 80 words, refuse full solutions with exact phrasing, use code fences, no markdown headers |
-| **3. Post-Filter** | `enforceMentorResponse()` | Strips markdown headers, checks if any code block > 3 lines or contains full class/function definitions → replaces with canned hint. Truncates response to 80 words |
+| **2. System Prompt** | Behavior and formatting rules in the prompt | Answer general programming questions directly, never write a complete problem solution, avoid LaTeX, use code fences for snippets, and avoid markdown headers |
+| **3. Post-Filter** | `enforceMentorResponse()` | Cleans markdown headers outside code blocks, converts LaTeX-style complexity into readable text, rejects oversized code dumps, and trims overly verbose replies |
 
 ### Message Rendering Pipeline
 
@@ -325,11 +326,11 @@ sequenceDiagram
 Daedalus is designed as a **learning aid**, not a solution generator:
 
 - It does **not** provide complete working solutions.
-- Chat responses are kept under **80 words** with max **3 lines** of code.
-- Code snippets limited to partial examples — full class/function definitions are detected and replaced.
+- Chat responses are concise, but can include short syntax examples for general programming questions.
+- Oversized code snippets are treated as likely solution dumps and replaced with a safer direction.
 - Requests for full solutions are intercepted **before the API call** and refused with a canned response.
 - Analysis responses are structured as critique (verdict + hints), not code generation.
-- All LLM output passes through `enforceMentorResponse()` which enforces hard limits and strips violations.
+- All LLM output passes through `enforceMentorResponse()` which cleans formatting artifacts and enforces safety limits.
 
 ---
 

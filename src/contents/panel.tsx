@@ -1,5 +1,3 @@
-// Content script for the analyzer panel shown on LeetCode problem pages.
-
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import { useEffect, useState } from "react"
 import cssText from "data-text:~/styles.css"
@@ -29,6 +27,7 @@ export const config: PlasmoCSConfig = {
 
 export const getShadowHostId = () => "daedalus-host"
 
+// Plasmo uses a shadow root, so styles need to be injected manually.
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
   style.textContent = cssText
@@ -59,6 +58,7 @@ export default function Panel() {
     await send(message, latestContext)
   }
 
+  // The popup dispatches this event when the user clicks "Open Analyzer".
   useEffect(() => {
     const togglePanel = () => setVisible((current) => !current)
     window.addEventListener("daedalus-toggle-panel", togglePanel)

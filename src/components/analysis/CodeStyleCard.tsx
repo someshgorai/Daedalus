@@ -8,13 +8,13 @@ const scoreKeys: { key: keyof CodeStyle; label: string }[] = [
 ]
 
 function scoreLevel(score: number) {
-  if (score >= 80) return "high"
-  if (score >= 60) return "medium"
+  if (score >= 8) return "high"
+  if (score >= 6) return "medium"
   return "low"
 }
 
 export function CodeStyleCard({ codeStyle }: { codeStyle: CodeStyle }) {
-  const overall = codeStyle.overallScore || 0
+  const overall = Number(codeStyle.overallScore || 0)
 
   return (
     <section className="analysis-card">
@@ -24,7 +24,7 @@ export function CodeStyleCard({ codeStyle }: { codeStyle: CodeStyle }) {
           <span>Code style</span>
         </div>
         <span className={`score-badge score-badge--${scoreLevel(overall)}`}>
-          {overall}/100
+          {overall}/10
         </span>
       </div>
 
@@ -36,7 +36,7 @@ export function CodeStyleCard({ codeStyle }: { codeStyle: CodeStyle }) {
               <span className="score-row__label">{label}</span>
               <progress
                 className={`score-progress score-progress--${scoreLevel(score)}`}
-                max="100"
+                max="10"
                 value={score}
               />
               <span className="score-row__value">{score}</span>

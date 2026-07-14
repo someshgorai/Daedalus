@@ -6,7 +6,6 @@ import {
   STORAGE_KEY_MODEL,
 } from "~/utils/constants"
 
-
 const storage = new Storage()
 
 export function useSettings() {
@@ -14,16 +13,29 @@ export function useSettings() {
   const [selectedModel, setModelState] = useState(DEFAULT_MODEL)
   const [ready, setReady] = useState(false)
 
-  // Load from storage on mount
   useEffect(() => {
-    Promise.all([
-      storage.get<string>(STORAGE_KEY_API_KEY),
-      storage.get<string>(STORAGE_KEY_MODEL),
-    ]).then(([key, model]) => {
-      if (key) setApiKeyState(key)
-      if (model) setModelState(model)
-      setReady(true)
-    })
+    let cancelled = false
+
+    async function loadSettings() {
+      try {
+        const [key, model] = await Promise.all([
+          storage.get<string>(STORAGE_KEY_API_KEY),
+          storage.get<string>(STORAGE_KEY_MODEL),
+        ])
+
+        if (cancelled) return
+        if (key) setApiKeyState(key)
+        if (model) setModelState(model)
+      } finally {
+        if (!cancelled) setReady(true)
+      }
+    }
+
+    loadSettings()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const saveApiKey = useCallback(async (key: string) => {
@@ -37,11 +49,6 @@ export function useSettings() {
     setModelState(model)
   }, [])
 
-  const clearApiKey = useCallback(async () => {
-    await storage.remove(STORAGE_KEY_API_KEY)
-    setApiKeyState("")
-  }, [])
-
   const isKeyValid = apiKey.startsWith("sk-or-")
 
   return {
@@ -51,6 +58,5 @@ export function useSettings() {
     isKeyValid,
     saveApiKey,
     saveModel,
-    clearApiKey,
   }
 }

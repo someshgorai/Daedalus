@@ -9,7 +9,7 @@ import type {
 } from "~/utils/types"
 
 function makeId(): string {
-  return Math.random().toString(36).slice(2, 9)
+  return crypto.randomUUID()
 }
 
 function buildMsg(
@@ -31,7 +31,10 @@ export function useChat(context: LCContext | null) {
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll whenever messages or loading state changes
+  // Avoid stale chat history without rebuilding the send callback every turn.
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, loading])
@@ -51,7 +54,7 @@ export function useChat(context: LCContext | null) {
           name: "chat",
           body: {
             context: activeContext,
-            history: messages,
+            history: messagesRef.current,
             message: text,
           },
         })
@@ -62,27 +65,19 @@ export function useChat(context: LCContext | null) {
         setMessages((prev) => [...prev, assistantMsg])
       } catch (e) {
         setError((e as Error).message)
-        // Remove the user message that failed so user can retry
         setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
       } finally {
         setLoading(false)
       }
     },
-    [context, messages, loading],
+    [context, loading],
   )
-
-  const clear = useCallback(() => {
-    setMessages([])
-    setError(null)
-  }, [])
 
   return {
     messages,
     loading,
     error,
     send,
-    clear,
     bottomRef,
-    messageCount: messages.length,
   }
 }

@@ -7,21 +7,23 @@ import type {
   AnalyzeRequest,
   AnalyzeResponse,
   LCContext,
-  ValidationResult
+  ValidationResult,
 } from "~/utils/types"
-
 
 export function useAnalysis() {
   const [status, setStatus] = useState<AnalysisStatus>("idle")
   const [result, setResult] = useState<Analysis | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [validationError, setValidationError] = useState<ValidationResult | null>(null)
+  const [validationError, setValidationError] =
+    useState<ValidationResult | null>(null)
 
   const analyze = useCallback(async (context: LCContext) => {
-    // Validate before hitting the API
-    const validation = validateCode(context.code, context.language)
+    // Block empty stubs before the model has a chance to hallucinate analysis.
+    const validation = validateCode(context.code)
     if (!validation.valid) {
       setValidationError(validation)
+      setResult(null)
+      setError(null)
       setStatus("idle")
       return
     }
@@ -46,21 +48,11 @@ export function useAnalysis() {
     }
   }, [])
 
-  const reset = useCallback(() => {
-    setStatus("idle")
-    setResult(null)
-    setError(null)
-    setValidationError(null)
-  }, [])
-
   return {
     status,
     result,
     error,
     validationError,
     analyze,
-    reset,
-    isLoading: status === "loading",
-    isSuccess: status === "success",
   }
 }

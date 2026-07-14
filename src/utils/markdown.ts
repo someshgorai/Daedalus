@@ -18,11 +18,64 @@ function normalizeLang(raw: string): string {
   return map[raw.toLowerCase()] ?? raw.toLowerCase()
 }
 
-// Split model output so snippets are rendered separately from prose.
+function transformOutsideCodeFences(
+  text: string,
+  transform: (value: string) => string,
+): string {
+  return text
+    .split(/(```[^\n`]*\n?[\s\S]*?```)/g)
+    .map((part) => part.startsWith("```") ? part : transform(part))
+    .join("")
+}
+
+function plainLatex(inner: string): string {
+  let plain = inner
+  plain = plain.replace(/\\cdot/g, "*")
+  plain = plain.replace(/\\times/g, "×")
+  plain = plain.replace(/\\leq/g, "<=")
+  plain = plain.replace(/\\geq/g, ">=")
+  plain = plain.replace(/\\neq/g, "!=")
+  plain = plain.replace(/\\infty/g, "∞")
+  plain = plain.replace(/\\text(?:bf|it|rm)?\{([^}]*)}/, "$1")
+  plain = plain.replace(/\\(log|min|max|sum|sqrt|sin|cos|tan|ln)\b/g, "$1")
+  plain = plain.replace(/\^\{([^}]*)}/, "^($1)")
+  plain = plain.replace(/_\{([^}]*)}/, "_($1)")
+  plain = plain.replace(/\\frac\{([^}]*)}\{([^}]*)}/, "($1 / $2)")
+  plain = plain.replace(/\\(?:left|right)[.()[\]|]/g, "")
+  plain = plain.replace(/\\_/g, "_")
+  plain = plain.replace(/\\[a-zA-Z]+/g, "")
+  return plain
+}
+
+export function sanitizeModelText(raw: string): string {
+  let text = raw
+
+  // Keep code fences untouched while cleaning model prose.
+  text = transformOutsideCodeFences(text, (value) =>
+    value
+      .replace(/\$([^$\n]+)\$/g, (_match, inner: string) => plainLatex(inner))
+      .replace(/\\\(([\s\S]*?)\\\)/g, (_match, inner: string) => plainLatex(inner))
+      .replace(/\\\[([\s\S]*?)\\\]/g, (_match, inner: string) => plainLatex(inner))
+      .replace(/\bO\(([^()\n]*\\[a-zA-Z][^()\n]*)\)/g, (_match, inner: string) => `O(${plainLatex(inner)})`)
+      .replace(/\$/g, "")
+      .replace(/^#{1,6}\s+(?=\S)/gm, ""),
+  )
+
+  text = transformOutsideCodeFences(text, (value) =>
+    value.replace(/(?<![\w`])'+([^'\n]+)'+(?![\w`])/g, "$1"),
+  )
+
+  text = transformOutsideCodeFences(text, (value) =>
+    value.replace(/\*{3,}/g, "**"),
+  )
+
+  return text
+}
+
 export function parseResponse(raw: string): MessageSegment[] {
+  const cleaned = sanitizeModelText(raw)
   const segments: MessageSegment[] = []
-  // The label pattern also handles names such as c++ and objective-c.
-  const parts = raw.split(/(```[^\n`]*\n?[\s\S]*?```)/g)
+  const parts = cleaned.split(/(```[^\n`]*\n?[\s\S]*?```)/g)
 
   for (const part of parts) {
     if (!part.trim()) continue
@@ -35,7 +88,6 @@ export function parseResponse(raw: string): MessageSegment[] {
         segments.push({ type: "code", content: code, language: lang })
       }
     } else {
-      // Some models omit fences around short expressions.
       const lines = part.trim().split("\n")
       let textBuffer: string[] = []
 
@@ -59,7 +111,7 @@ export function parseResponse(raw: string): MessageSegment[] {
 
   return segments.length > 0
     ? segments
-    : [{ type: "text", content: raw.trim() }]
+    : [{ type: "text", content: cleaned.trim() }]
 }
 
 function looksLikeCode(line: string): boolean {

@@ -7,7 +7,6 @@ export function useModels() {
   const [models, setModels] = useState<ORModel[]>(CURATED_FREE_MODELS)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastFetched, setLastFetched] = useState<number | null>(null)
 
   const refresh = useCallback(async (apiKey: string) => {
     if (!apiKey) return
@@ -24,10 +23,8 @@ export function useModels() {
 
       if (res.models && res.models.length > 0) {
         setModels(res.models)
-        setLastFetched(Date.now())
       }
     } catch (e) {
-      // Don't clear existing models on error — keep curated list
       setError((e as Error).message)
     } finally {
       setLoading(false)
@@ -38,8 +35,6 @@ export function useModels() {
     models,
     loading,
     error,
-    lastFetched,
     refresh,
-    modelCount: models.length,
   }
 }

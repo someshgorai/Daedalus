@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react"
-import { useModels } from "~/hooks/useModels"
-import { useSettings } from "~/hooks/useSettings"
+import { useApiKeyForm } from "~/hooks/useApiKeyForm"
 import { GlowBadge } from "../ui/GlowBadge"
 import { ShimmerButton } from "../ui/ShimmerButton"
 
@@ -8,35 +6,18 @@ export function SettingsPanel() {
   const {
     apiKey,
     selectedModel,
-    ready,
     isKeyValid,
-    saveApiKey,
     saveModel,
-  } = useSettings()
-  const { models, loading: modelsLoading, refresh } = useModels()
-  const [keyInput, setKeyInput] = useState("")
-  const [keyError, setKeyError] = useState("")
-  const [savedFeedback, setSavedFeedback] = useState(false)
-
-  useEffect(() => {
-    if (ready && apiKey) setKeyInput(apiKey)
-  }, [ready, apiKey])
-
-  useEffect(() => {
-    if (apiKey && isKeyValid) refresh(apiKey)
-  }, [apiKey])
-
-  const handleSave = async () => {
-    const key = keyInput.trim()
-    if (!key) return setKeyError("API key cannot be empty")
-    if (!key.startsWith("sk-or-")) return setKeyError("Must start with sk-or-…")
-
-    setKeyError("")
-    await saveApiKey(key)
-    setSavedFeedback(true)
-    refresh(key)
-    setTimeout(() => setSavedFeedback(false), 2000)
-  }
+    keyInput,
+    keyError,
+    savedFeedback,
+    handleSave,
+    handleKeyInputChange,
+    models,
+    modelsLoading,
+    modelsError,
+    refreshModels,
+  } = useApiKeyForm()
 
   return (
     <div className="settings-panel">
@@ -52,10 +33,7 @@ export function SettingsPanel() {
             className="form-control form-control--key"
             type="password"
             value={keyInput}
-            onChange={(event) => {
-              setKeyInput(event.target.value)
-              setKeyError("")
-            }}
+            onChange={(event) => handleKeyInputChange(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && handleSave()}
             placeholder="sk-or-v1-…"
           />
@@ -87,7 +65,7 @@ export function SettingsPanel() {
           </label>
           <button
             className="text-button"
-            onClick={() => apiKey && refresh(apiKey)}
+            onClick={() => apiKey && refreshModels(apiKey)}
             disabled={modelsLoading || !apiKey}
           >
             {modelsLoading ? "⟳ Loading…" : "↻ Refresh"}
@@ -102,6 +80,7 @@ export function SettingsPanel() {
             <option key={model.id} value={model.id}>{model.name}</option>
           ))}
         </select>
+        {modelsError && <p className="form-error">{modelsError}</p>}
         <p className="selected-model">Selected: {selectedModel}</p>
       </section>
     </div>

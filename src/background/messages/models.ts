@@ -2,7 +2,7 @@ import type { PlasmoMessaging } from "@plasmohq/messaging"
 import type { ModelsRequest, ModelsResponse } from "~/utils/types"
 import { fetchFreeModels } from "~/utils/openrouter"
 
-const handler: PlasmoMessaging.MessageHandler<
+const modelsHandler: PlasmoMessaging.MessageHandler<
   ModelsRequest,
   ModelsResponse
 > = async (req, res) => {
@@ -14,4 +14,4 @@ const handler: PlasmoMessaging.MessageHandler<
   }
 }
 
-export default handler
+export default modelsHandler

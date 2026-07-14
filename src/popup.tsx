@@ -1,53 +1,34 @@
-// Extension popup for API key and model settings.
-
 import { useEffect, useState } from "react"
-import { GlowBadge } from "./components/ui/GlowBadge"
 import { LightRays } from "./components/ui/LightRays"
+import { GlowBadge } from "./components/ui/GlowBadge"
 import { ShimmerButton } from "./components/ui/ShimmerButton"
-import { useModels } from "~/hooks/useModels"
-import { useSettings } from "~/hooks/useSettings"
+import { useApiKeyForm } from "~/hooks/useApiKeyForm"
 import "~/styles.css"
 
 export default function Popup() {
   const {
     apiKey,
     selectedModel,
-    ready,
     isKeyValid,
-    saveApiKey,
     saveModel,
-  } = useSettings()
-  const { models, loading: modelsLoading, refresh } = useModels()
-  const [keyInput, setKeyInput] = useState("")
-  const [keyError, setKeyError] = useState("")
-  const [savedFeedback, setSavedFeedback] = useState(false)
-  const [isLeetCode, setIsLeetCode] = useState(false)
+    keyInput,
+    keyError,
+    savedFeedback,
+    handleSave,
+    handleKeyInputChange,
+    models,
+    modelsLoading,
+    modelsError,
+    refreshModels,
+  } = useApiKeyForm()
 
-  useEffect(() => {
-    if (ready && apiKey) setKeyInput(apiKey)
-  }, [ready, apiKey])
+  const [isLeetCode, setIsLeetCode] = useState(false)
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       setIsLeetCode(Boolean(tab?.url?.includes("leetcode.com/problems/")))
     })
   }, [])
-
-  useEffect(() => {
-    if (apiKey && isKeyValid) refresh(apiKey)
-  }, [apiKey])
-
-  const handleSave = async () => {
-    const key = keyInput.trim()
-    if (!key) return setKeyError("API key cannot be empty")
-    if (!key.startsWith("sk-or-")) return setKeyError("Must start with sk-or-…")
-
-    setKeyError("")
-    await saveApiKey(key)
-    setSavedFeedback(true)
-    refresh(key)
-    setTimeout(() => setSavedFeedback(false), 2000)
-  }
 
   const handleOpenPanel = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -82,14 +63,14 @@ export default function Popup() {
                 className="form-control form-control--popup"
                 type="password"
                 value={keyInput}
-                onChange={(event) => {
-                  setKeyInput(event.target.value)
-                  setKeyError("")
-                }}
+                onChange={(event) => handleKeyInputChange(event.target.value)}
                 onKeyDown={(event) => event.key === "Enter" && handleSave()}
                 placeholder="sk-or-v1-…"
               />
-              <ShimmerButton className="shimmer-button--compact" onClick={handleSave}>
+              <ShimmerButton
+                className="shimmer-button--compact"
+                onClick={handleSave}
+              >
                 {savedFeedback ? "✓" : "Save"}
               </ShimmerButton>
             </div>
@@ -117,7 +98,7 @@ export default function Popup() {
               </label>
               <button
                 className="text-button"
-                onClick={() => apiKey && refresh(apiKey)}
+                onClick={() => apiKey && refreshModels(apiKey)}
                 disabled={modelsLoading || !apiKey}
               >
                 {modelsLoading ? "⟳ loading…" : "↻ refresh"}
@@ -132,6 +113,9 @@ export default function Popup() {
                 <option key={model.id} value={model.id}>{model.name}</option>
               ))}
             </select>
+            {modelsError && (
+              <p className="form-error form-error--popup">{modelsError}</p>
+            )}
           </section>
 
           <div className="popup-action">

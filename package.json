@@ -2,7 +2,7 @@
   "name": "daedalus",
   "displayName": "Daedalus",
   "version": "2.0.0",
-  "description": "Daedalus is an AI-powered LeetCode mentor that gives hints, not solutions",
+  "description": "Daedalus is an AI-powered LeetCode mentor that answers programming questions without giving full solutions",
   "author": "Somesh Gorai",
   "scripts": {
     "dev": "plasmo dev",

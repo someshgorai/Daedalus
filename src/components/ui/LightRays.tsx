@@ -20,6 +20,8 @@ export function LightRays({ children, width, height }: LightRaysProps) {
 
     let frame = 0
     let disposed = false
+
+    // Match the canvas to its container so the rays stay crisp on HiDPI screens.
     const resize = () => {
       const rect = container.getBoundingClientRect()
       const dpr = Math.min(window.devicePixelRatio || 1, 2)

@@ -72,8 +72,6 @@ option {
   font-family: "JetBrains Mono", monospace;
 }
 
-/* Shared animation */
-
 @keyframes float {
   0%,
   100% {
@@ -157,8 +155,6 @@ option {
     transform: translateY(0);
   }
 }
-
-/* Shared UI */
 
 .light-rays {
   position: relative;
@@ -352,8 +348,6 @@ option {
   animation-delay: 0.4s;
 }
 
-/* Sidebar */
-
 .daedalus-root {
   color: #fff;
   font-family: "Inter", sans-serif;
@@ -388,7 +382,10 @@ option {
 }
 
 .floating-button--open {
-  animation: glow-pulse 2s ease-in-out infinite;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.85);
+  animation: none;
 }
 
 .floating-button__icon {
@@ -592,8 +589,6 @@ option {
   cursor: not-allowed;
   opacity: 0.5;
 }
-
-/* Analysis */
 
 .analysis-card {
   margin-bottom: 12px;
@@ -961,8 +956,6 @@ option {
   color: var(--amber);
 }
 
-/* Chat */
-
 .chat-messages {
   display: flex;
   flex: 1;
@@ -1031,6 +1024,25 @@ option {
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.chat-text code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 140, 0, 0.12);
+  color: var(--orange-bright);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+
+.chat-text strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.chat-text em {
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .chat-message--user .chat-text {
@@ -1172,8 +1184,6 @@ option {
   color: rgba(255, 255, 255, 0.85);
   white-space: pre;
 }
-
-/* Forms and settings */
 
 .settings-panel {
   display: flex;
@@ -1324,8 +1334,6 @@ option {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* Popup */
 
 .popup {
   width: 340px;

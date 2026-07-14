@@ -1,9 +1,8 @@
 import { MAX_QUESTION_CHARS, MAX_CODE_CHARS } from "./constants"
 import type { LCContext } from "./types"
 
-// Problem text
-
 export function extractTitle(): string {
+  // LeetCode markup changes often, so selectors go from stable to fallback.
   const titleSelectors = [
     "div[data-cy='question-title']",
     ".text-title-large a",
@@ -14,6 +13,7 @@ export function extractTitle(): string {
     const el = document.querySelector(sel)
     if (el?.textContent?.trim()) return el.textContent.trim()
   }
+
   return document.title
     .replace(/- LeetCode.*/i, "")
     .replace(/LeetCode\s*-\s*/i, "")
@@ -36,13 +36,12 @@ export function extractQuestion(): string {
       return text.slice(0, MAX_QUESTION_CHARS)
     }
   }
+
   return extractTitle()
 }
 
-// Editor state
-
 export function extractCode(): string {
-  // Monaco's textarea has the full value; rendered lines may be virtualized.
+  // Prefer Monaco's textarea because rendered editor lines can be virtualized.
   const editorTextareas = Array.from(
     document.querySelectorAll<HTMLTextAreaElement>("textarea.inputarea"),
   )
@@ -58,7 +57,6 @@ export function extractCode(): string {
     return activeTextarea.value.trim().slice(0, MAX_CODE_CHARS)
   }
 
-  // Older editor versions may only expose rendered lines.
   const monacoEditors = Array.from(document.querySelectorAll(".monaco-editor"))
   for (const editor of monacoEditors) {
     const monacoLines = editor.querySelectorAll(".view-lines .view-line")
@@ -74,7 +72,6 @@ export function extractCode(): string {
   const cm = document.querySelector(".CodeMirror-code")
   if (cm?.textContent) return cm.textContent.trim().slice(0, MAX_CODE_CHARS)
 
-  // Ignore CodeMirror instances used for test cases.
   const cm6Editors = Array.from(
     document.querySelectorAll<HTMLElement>(".cm-editor .cm-content"),
   )
@@ -102,7 +99,7 @@ export function extractLanguage(): string {
     if (text && text.length < 30) return text
   }
 
-  // The current language picker has no stable ID, so use its visible value.
+  // Some LeetCode dropdowns only expose the selected language as button text.
   const languageNames = new Set([
     "C", "C++", "C#", "Dart", "Elixir", "Erlang", "Go", "Java",
     "JavaScript", "Kotlin", "PHP", "Python", "Python3", "Racket",
@@ -126,7 +123,6 @@ export function extractContext(): LCContext {
   }
 }
 
-// Preserve the problem statement when only the editor has changed.
 export function refreshCodeContext(existing: LCContext): LCContext {
   return {
     ...existing,

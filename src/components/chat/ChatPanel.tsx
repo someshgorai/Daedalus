@@ -1,5 +1,6 @@
 import React from "react"
 import type { ChatMsg } from "~/utils/types"
+import { applyInlineMarkdown } from "~/utils/markdown"
 import { TypingDots } from "../ui/TypingDots"
 import { CodeBlock } from "./CodeBlock"
 
@@ -36,7 +37,11 @@ export function ChatPanel({
             <div className="chat-bubble">
               {message.segments.map((segment, index) => (
                 segment.type === "text" ? (
-                  <p className="chat-text" key={index}>{segment.content}</p>
+                  <p
+                    className="chat-text"
+                    key={index}
+                    dangerouslySetInnerHTML={{ __html: applyInlineMarkdown(segment.content) }}
+                  />
                 ) : (
                   <CodeBlock
                     code={segment.content}
@@ -59,6 +64,7 @@ export function ChatPanel({
       )}
 
       {error && <div className="chat-error">❌ {error}</div>}
+
       <div ref={bottomRef} />
     </div>
   )

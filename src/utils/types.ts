@@ -1,13 +1,7 @@
-export interface Settings {
-  apiKey: string
-  selectedModel: string
-}
-
 export interface ORModel {
   id: string
   name: string
   contextLength?: number
-  isFree?: boolean
 }
 
 export interface LCContext {
@@ -87,13 +81,11 @@ export interface MessageSegment {
   note?: string
 }
 
-export interface CodeSnippet {
-  code: string
-  language: string
-  note: string
-}
-
-export type ValidationReason = "empty" | "too_short" | "placeholder" | "syntax_error"
+export type ValidationReason =
+  | "empty"
+  | "too_short"
+  | "placeholder"
+  | "no_implementation"
 
 export interface ValidationResult {
   valid: boolean
